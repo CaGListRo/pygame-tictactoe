@@ -19,6 +19,7 @@ class Game:
         self.player = 1
         self.clicked = False
         self.mouse_pos = (-1, -1)
+        self.again_question = True
         
         self.BG_COLOR = (255, 255, 200)
         self.playing_field = self.clear_field()
@@ -26,26 +27,38 @@ class Game:
     def clear_field(self):
         return [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
+    def create_end_text(self):
+        player_number = self.get_player_number()
+        winning_text = (f'Player {player_number} wins!')
+        self.winning_text_surf = self.font.render(winning_text, True, ('darkgreen' if player_number == 1 else 'darkred'))
+        again_text = ('Play again?')
+        self.again_text_surf = self.font.render(again_text, True, 'darkgreen')
+        quit_text = ('Quit game?')
+        self.quit_text_surf = self.font.render(quit_text, True, 'darkred')
+
     def check_winning(self):
         for i in range(3):
             if sum(self.playing_field[i]) == 3 or sum(self.playing_field[i]) == -3:
-                return True
+                self.won =  True
             if sum(row[i] for row in self.playing_field) == 3 or sum(row[i] for row in self.playing_field) == -3:
-                return True
+                self.won =  True
     
         if self.playing_field[0][0] + self.playing_field[1][1] + self.playing_field[2][2] == 3 or self.playing_field[0][0] + self.playing_field[1][1] + self.playing_field[2][2] == -3:
-            return True
+            self.won =  True
         if self.playing_field[0][2] + self.playing_field[1][1] + self.playing_field[2][0] == 3 or self.playing_field[0][2] + self.playing_field[1][1] + self.playing_field[2][0] == -3:
-            return True
+            self.won =  True
         
-        return False
+        if self.won:
+            self.create_end_text()
+        
+
 
     def swab_player(self):
-        self.player *= -1
-        return True
+        if not self.won:
+            self.player *= -1
 
     def mark_field(self):
-        if self.clicked:
+        if self.clicked and not self.won:
             if 0 <= self.mouse_pos[0] < self.WIDTH // 3:
                 x = 0
             elif self.WIDTH // 3 <= self.mouse_pos[0] < self.WIDTH // 3 * 2:
@@ -58,9 +71,10 @@ class Game:
                 y = 1
             elif  self.HEIGHT // 3 * 2 <= self.mouse_pos[1] < self.HEIGHT:
                 y = 2
-            self.playing_field[y][x] = self.player
-            if not self.won:
-                self.printing = self.swab_player()
+            if self.playing_field[y][x] == 0:
+                self.playing_field[y][x] = self.player
+                self.check_winning()
+                self.swab_player()
 
     def get_input(self):
         for event in pg.event.get():
@@ -73,7 +87,7 @@ class Game:
     def draw_circle(self, j, i):
         centerx = (self.WIDTH // 3 * i) + self.field_size // 2
         centery = (self.HEIGHT // 3 * j) + self.field_size // 2
-        pg.draw.circle(self.window, 'red', (centerx, centery), (self.field_size // 2) - self.padding, self.LINE_THIKNESS * 2)
+        pg.draw.circle(self.window, 'darkred', (centerx, centery), (self.field_size // 2) - self.padding, self.LINE_THIKNESS * 2)
 
     def draw_cross(self, j, i):
         centerx = self.WIDTH // 3 * i + self.field_size // 2
@@ -97,6 +111,10 @@ class Game:
                     self.draw_cross(j, i)
                 elif self.playing_field[j][i] == -1:
                     self.draw_circle(j, i)
+        if self.won:
+            self.window.blit(self.winning_text_surf, (self.WIDTH // 2 - self.winning_text_surf.get_width() // 2, self.HEIGHT // 3 - self.winning_text_surf.get_height() // 2))
+            self.window.blit(self.again_text_surf, (self.WIDTH // 2 - self.again_text_surf.get_width() // 2, self.HEIGHT // 2 - self.again_text_surf.get_height() // 2))
+            self.window.blit(self.quit_text_surf, (self.WIDTH // 2 - self.quit_text_surf.get_width() // 2, self.HEIGHT // 3 * 2 - self.quit_text_surf.get_height() // 2))
         
         pg.display.update()
 
@@ -106,13 +124,13 @@ class Game:
             self.clock.tick(30)
             self.get_input()
             self.mark_field()
-            self.won = self.check_winning()
-            self.draw_window()            
+            self.draw_window()
+                       
             if self.clicked:
                 self.clicked = False
-            if self.won:
-                print('won')
-                self.running = False
+
+                
+                
 
         pg.quit()
                     
