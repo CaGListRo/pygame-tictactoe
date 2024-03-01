@@ -1,6 +1,6 @@
 import pygame as pg
 import settings
-from utils import load_image
+from utils import load_image, Button
 
 
 class Game:
@@ -19,6 +19,8 @@ class Game:
         self.again_question = True
         self.move_counter = 0
         self.tie = False
+        self.play_again = None
+        self.quit = None
         
         self.playing_field = self.clear_field()
 
@@ -27,28 +29,36 @@ class Game:
         self.end_screen_dimming.fill(settings.GREY)
         self.end_screen_dimming.set_alpha(240)
 
-        self.again_button_rect = pg.Rect(settings.AGAIN_RECT_X, settings.AGAIN_RECT_Y, settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT)
-        self.quit_button_rect = pg.Rect(settings.QUIT_RECT_X, settings.QUIT_RECT_Y, settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT)
-
-        self.again_button_color = settings.BUTTON_COLORS['green']['color']
-        self.quit_button_color = settings.BUTTON_COLORS['red']['color']
+        self.again_button = Button(self.window, 'Play again!', (settings.HALF_WIDTH, settings.HALF_HEIGHT), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'green')
+        self.quit_button = Button(self.window, 'Quit game!', (settings.HALF_WIDTH, settings.HALF_HEIGHT + settings.FIELD_SIZE // 2), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'red')
 
     def clear_field(self):
         return [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
-    def create_end_text(self):
+    def check_again(self):
+        if self.play_again:
+            pg.time.wait(500)
+            self.running = True
+            self.won = False
+            self.player = 1
+            self.clicked = False
+            self.mouse_pos = (-1, -1)
+            self.again_question = True
+            self.move_counter = 0
+            self.tie = False
+            self.play_again = None
+            self.quit = None
+        
+            self.playing_field = self.clear_field()
+            
+    def create_winner_banner(self):
         if not self.tie:
             player_number = self.get_player_number()
             winning_text = (f'Player {player_number} wins!')
             self.winner_text_surf = self.font.render(winning_text, True, (settings.GREEN if player_number == 1 else settings.RED))
         else:
-            winning_text = (f'It a tie!')
+            winning_text = (f"It's a tie!")
             self.winner_text_surf = self.font.render(winning_text, True, settings.BLACK)
-        
-        again_text = ('Play again?')
-        self.again_text_surf = self.font.render(again_text, True, settings.WHITE)
-        quit_text = ('Quit game?')
-        self.quit_text_surf = self.font.render(quit_text, True, settings.WHITE)
 
     def check_winning(self):
         for i in range(3):
@@ -63,36 +73,37 @@ class Game:
             self.won =  True
         
         if self.won:
-            self.create_end_text()
+            self.create_winner_banner()
         
         if self.move_counter >= 9 and not self.won:
             self.tie = True
-            self.create_end_text()
+            self.create_winner_banner()
 
-    def swab_player(self):
+    def swap_player(self):
         if not self.won:
             self.player *= -1
 
     def mark_field(self):
-        if self.clicked and not self.won and not self.tie:
-            if 0 <= self.mouse_pos[0] < settings.FIELD_SIZE:
-                x = 0
-            elif settings.FIELD_SIZE <= self.mouse_pos[0] < settings.FIELD_SIZE * 2:
-                x = 1
-            elif  settings.FIELD_SIZE * 2 <= self.mouse_pos[0] < settings.WIDTH:
-                x = 2
-            if 0 <= self.mouse_pos[1] < settings.HEIGHT // 3:
-                y = 0
-            elif settings.FIELD_SIZE <= self.mouse_pos[1] < settings.FIELD_SIZE * 2:
-                y = 1
-            elif  settings.FIELD_SIZE * 2 <= self.mouse_pos[1] < settings.HEIGHT:
-                y = 2
-            if self.playing_field[y][x] == 0:
-                self.move_counter += 1
-                print(self.move_counter)
-                self.playing_field[y][x] = self.player
-                self.check_winning()
-                self.swab_player()
+        if 0 <=  self.mouse_pos[0] <= settings.WIDTH and 0 <=  self.mouse_pos[1] <= settings.HEIGHT:
+            if self.clicked and not self.won and not self.tie:
+                if 0 <= self.mouse_pos[0] < settings.FIELD_SIZE:
+                    x = 0
+                elif settings.FIELD_SIZE <= self.mouse_pos[0] < settings.FIELD_SIZE * 2:
+                    x = 1
+                elif  settings.FIELD_SIZE * 2 <= self.mouse_pos[0] < settings.WIDTH:
+                    x = 2
+                if 0 <= self.mouse_pos[1] < settings.HEIGHT // 3:
+                    y = 0
+                elif settings.FIELD_SIZE <= self.mouse_pos[1] < settings.FIELD_SIZE * 2:
+                    y = 1
+                elif  settings.FIELD_SIZE * 2 <= self.mouse_pos[1] < settings.HEIGHT:
+                    y = 2
+                if self.playing_field[y][x] == 0:
+                    self.move_counter += 1
+                    print(self.move_counter)
+                    self.playing_field[y][x] = self.player
+                    self.check_winning()
+                    self.swap_player()
 
     def get_input(self):
         for event in pg.event.get():
@@ -101,6 +112,9 @@ class Game:
             if event.type == pg.MOUSEBUTTONUP:
                 self.clicked = True
                 self.mouse_pos = pg.mouse.get_pos()
+        
+        self.play_again = self.again_button.check_collision()
+        self.quit = self.quit_button.check_collision()
 
     def draw_circle(self, j, i):
         centerx = (settings.FIELD_SIZE * i) + settings.FIELD_SIZE // 2
@@ -117,10 +131,8 @@ class Game:
         return 1 if self.player == 1 else 2
 
     def draw_buttons(self):
-        pg.draw.rect(self.window, self.again_button_color, self.again_button_rect, border_radius=5)
-        self.window.blit(self.again_text_surf, (settings.HALF_WIDTH - self.again_text_surf.get_width() // 2, self.again_button_rect[1] + settings.BUTTON_HEIGHT // 2 - self.again_text_surf.get_height() // 2 - settings.AGAIN_BUTTON_ELEVATION + 5))
-        pg.draw.rect(self.window, self.quit_button_color, self.quit_button_rect, border_radius=5)
-        self.window.blit(self.quit_text_surf, (settings.HALF_WIDTH - self.quit_text_surf.get_width() // 2, self.quit_button_rect[1] + settings.BUTTON_HEIGHT // 2 - self.quit_text_surf.get_height() // 2 - settings.QUIT_BUTTON_ELEVATION + 5))
+        self.again_button.render()
+        self.quit_button.render()
 
     def draw_window(self):
         player_number = self.get_player_number()
@@ -135,6 +147,7 @@ class Game:
                     self.draw_cross(j, i)
                 elif self.playing_field[j][i] == -1:
                     self.draw_circle(j, i)
+
         if self.won or self.tie:
             self.window.blit(self.end_screen_dimming, (0, 0))
             self.window.blit(self.winner_banner, (settings.HALF_WIDTH - self.winner_banner.get_width() // 2, (settings.FIELD_SIZE - self.winner_banner.get_height() // 2)))
@@ -145,15 +158,20 @@ class Game:
 
     def run(self):
         while self.running:
-            self.printing = False
             self.clock.tick(30)
             self.get_input()
             self.mark_field()
             self.draw_window()
-                       
+
+            if self.won or self.tie:
+                self.check_again()
+            
             if self.clicked:
                 self.clicked = False
-
+            
+            if self.quit:
+                self.running = False
+                       
         pg.quit()
                     
 
