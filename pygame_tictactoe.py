@@ -2,40 +2,50 @@ import pygame as pg
 import settings
 from utils import load_image, Button
 
+from typing import TypeVar
+
+Button_object = TypeVar("Button_object")
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
+        """ Initializes the game class. """
         pg.init()
 
-        self.window = pg.display.set_mode((settings.WIDTH, settings.HEIGHT))
-        self.font = pg.font.SysFont('comicsans', 32)
+        self.window: pg.display = pg.display.set_mode((settings.WIDTH, settings.HEIGHT))
+        self.font: pg.font.Font = pg.font.SysFont("comicsans", 32)
 
-        self.clock = pg.time.Clock()
-        self.running = True
-        self.won = False
+        self.clock: pg.time.Clock = pg.time.Clock()
+        self.running: bool = True
+        self.won: bool = False
         self.player = 1
-        self.clicked = False
+        self.clicked: bool = False
         self.mouse_pos = (-1, -1)
-        self.again_question = True
+        self.again_question: bool = True
         self.move_counter = 0
-        self.tie = False
-        self.play_again = None
-        self.quit = None
+        self.tie: bool = False
+        self.play_again: bool = None
+        self.quit: bool = None
         
-        self.playing_field = self.clear_field()
+        self.playing_field: list[list[int]] = self.clear_field()
 
-        self.winner_banner = load_image('winner_banner', settings.WIDTH - settings.PADDING * 2)
-        self.end_screen_dimming = pg.Surface((settings.WIDTH, settings.HEIGHT))
+        self.winner_banner: pg.Surface = load_image("winner_banner", settings.WIDTH - settings.PADDING * 2)
+        self.end_screen_dimming: pg.Surface = pg.Surface((settings.WIDTH, settings.HEIGHT))
         self.end_screen_dimming.fill(settings.GREY)
         self.end_screen_dimming.set_alpha(240)
 
-        self.again_button = Button(self.window, 'Play again!', (settings.HALF_WIDTH, settings.HALF_HEIGHT), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'green')
-        self.quit_button = Button(self.window, 'Quit game!', (settings.HALF_WIDTH, settings.HALF_HEIGHT + settings.FIELD_SIZE // 2), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'red')
+        self.again_button: Button_object = Button(self.window, "Play again!", (settings.HALF_WIDTH, settings.HALF_HEIGHT), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'green')
+        self.quit_button: Button_object = Button(self.window, "Quit game!", (settings.HALF_WIDTH, settings.HALF_HEIGHT + settings.FIELD_SIZE // 2), (settings.BUTTON_WIDTH, settings.BUTTON_HEIGHT), 'red')
 
-    def clear_field(self):
+    def clear_field(self) -> list[list[int]]:
+        """
+        Returns the playing field filled with zeros.
+        Returns:
+        list[list[int]]: The playing field.
+        """
         return [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
-    def check_again(self):
+    def check_again(self) -> None:
+        """ Checks if self.play_again is true and starts a new game if so. """
         if self.play_again:
             pg.time.wait(500)
             self.running = True
@@ -51,16 +61,18 @@ class Game:
         
             self.playing_field = self.clear_field()
             
-    def create_winner_banner(self):
+    def create_winner_banner(self) -> None:
+        """ Creates a banner with the winner's number. """
         if not self.tie:
             player_number = self.get_player_number()
-            winning_text = (f'Player {player_number} wins!')
+            winning_text = (f"Player {player_number} wins!")
             self.winner_text_surf = self.font.render(winning_text, True, (settings.GREEN if player_number == 1 else settings.RED))
         else:
             winning_text = (f"It's a tie!")
             self.winner_text_surf = self.font.render(winning_text, True, settings.BLACK)
 
-    def check_winning(self):
+    def check_winning(self) -> None:
+        """ Checks if someone has won or if it is a tie. """
         for i in range(3):
             if sum(self.playing_field[i]) == 3 or sum(self.playing_field[i]) == -3:
                 self.won =  True
@@ -79,11 +91,13 @@ class Game:
             self.tie = True
             self.create_winner_banner()
 
-    def swap_player(self):
+    def swap_player(self) -> None:
+        """ Swaps the current player. (1 or -1) """
         if not self.won:
             self.player *= -1
 
-    def mark_field(self):
+    def mark_field(self) -> None:
+        """ Marks the field where the player clicked. """
         if 0 <=  self.mouse_pos[0] <= settings.WIDTH and 0 <=  self.mouse_pos[1] <= settings.HEIGHT:
             if self.clicked and not self.won and not self.tie:
                 if 0 <= self.mouse_pos[0] < settings.FIELD_SIZE:
@@ -105,7 +119,8 @@ class Game:
                     self.check_winning()
                     self.swap_player()
 
-    def get_input(self):
+    def get_input(self) -> None:
+        """ Gets the input from the player. """
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
@@ -116,27 +131,32 @@ class Game:
         self.play_again = self.again_button.check_collision()
         self.quit = self.quit_button.check_collision()
 
-    def draw_circle(self, j, i):
+    def draw_circle(self, j, i) -> None:
+        """ Draws a circle for player two's O. """
         centerx = (settings.FIELD_SIZE * i) + settings.FIELD_SIZE // 2
         centery = (settings.FIELD_SIZE * j) + settings.FIELD_SIZE // 2
         pg.draw.circle(self.window, settings.RED, (centerx, centery), (settings.FIELD_SIZE // 2) - settings.PADDING, settings.LINE_THIKNESS * 2)
 
-    def draw_cross(self, j, i):
+    def draw_cross(self, j, i) -> None:
+        """ Draws a cross for player one's X. """
         centerx = settings.FIELD_SIZE * i + settings.FIELD_SIZE // 2
         centery = settings.FIELD_SIZE * j + settings.FIELD_SIZE // 2
         pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), settings.LINE_THIKNESS * 2)
         pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), settings.LINE_THIKNESS * 2)
 
-    def get_player_number(self):
+    def get_player_number(self) -> int:
+        """ Returns the current player number. """
         return 1 if self.player == 1 else 2
 
-    def draw_buttons(self):
+    def draw_buttons(self) -> None:
+        """ Draws the buttons. """
         self.again_button.render()
         self.quit_button.render()
 
-    def draw_window(self):
+    def draw_window(self) -> None:
+        """ Draws the game window. """
         player_number = self.get_player_number()
-        pg.display.set_caption(f'Tic Tac Toe                   Player {player_number} is on')
+        pg.display.set_caption(f"Tic Tac Toe                   Player {player_number} is on")
         self.window.fill(settings.BG_COLOR)
         for i in range(3):
             if i > 0:
@@ -156,7 +176,8 @@ class Game:
         
         pg.display.update()
 
-    def run(self):
+    def run(self) -> None:
+        """ Runs the game. """
         while self.running:
             self.clock.tick(30)
             self.get_input()
