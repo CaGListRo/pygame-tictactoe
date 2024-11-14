@@ -135,14 +135,14 @@ class Game:
         """ Draws a circle for player two's O. """
         centerx = (settings.FIELD_SIZE * i) + settings.FIELD_SIZE // 2
         centery = (settings.FIELD_SIZE * j) + settings.FIELD_SIZE // 2
-        pg.draw.circle(self.window, settings.RED, (centerx, centery), (settings.FIELD_SIZE // 2) - settings.PADDING, settings.LINE_THIKNESS * 2)
+        pg.draw.circle(self.window, settings.RED, (centerx, centery), (settings.FIELD_SIZE // 2) - settings.PADDING, settings.LINE_THICKNESS * 2)
 
     def draw_cross(self, j, i) -> None:
         """ Draws a cross for player one's X. """
         centerx = settings.FIELD_SIZE * i + settings.FIELD_SIZE // 2
         centery = settings.FIELD_SIZE * j + settings.FIELD_SIZE // 2
-        pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), settings.LINE_THIKNESS * 2)
-        pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), settings.LINE_THIKNESS * 2)
+        pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), settings.LINE_THICKNESS * 2)
+        pg.draw.line(self.window, settings.GREEN, (centerx - (settings.FIELD_SIZE // 2) + settings.PADDING * 2, centery + (settings.FIELD_SIZE // 2) - settings.PADDING * 2), (centerx + (settings.FIELD_SIZE // 2) - settings.PADDING * 2, centery - (settings.FIELD_SIZE // 2) + settings.PADDING * 2), settings.LINE_THICKNESS * 2)
 
     def get_player_number(self) -> int:
         """ Returns the current player number. """
@@ -160,8 +160,8 @@ class Game:
         self.window.fill(settings.BG_COLOR)
         for i in range(3):
             if i > 0:
-                pg.draw.line(self.window, settings.BLACK, (settings.FIELD_SIZE * i, 0), (settings.FIELD_SIZE * i, settings.HEIGHT), settings.LINE_THIKNESS)
-                pg.draw.line(self.window, settings.BLACK, (0, settings.FIELD_SIZE * i), (settings.HEIGHT, settings.FIELD_SIZE * i), settings.LINE_THIKNESS)
+                pg.draw.line(self.window, settings.BLACK, (settings.FIELD_SIZE * i, 0), (settings.FIELD_SIZE * i, settings.HEIGHT), settings.LINE_THICKNESS)
+                pg.draw.line(self.window, settings.BLACK, (0, settings.FIELD_SIZE * i), (settings.HEIGHT, settings.FIELD_SIZE * i), settings.LINE_THICKNESS)
             for j in range(3):
                 if self.playing_field[j][i] == 1:
                     self.draw_cross(j, i)
